@@ -16,28 +16,33 @@ class Day5(var memory: Array<Int>, val inputCode: Int) {
     var lastOutput: Int = -1
     private var instructionPointer = 0
     private var done = false
+    private var skipInstructionPointerUpdate = false
 
-    fun opcode(paramCount: Int, updateInstructionPointer: Boolean = true, command: (IntArray) -> Unit) {
+    private fun opcode(paramCount: Int, command: (IntArray) -> Unit) {
         val params = getParams(paramCount)
 
         command(params)
 
-        if (updateInstructionPointer) {
+        if (!skipInstructionPointerUpdate) {
             instructionPointer += paramCount + 1
         }
+        skipInstructionPointerUpdate = false
+    }
+
+    private fun setInstruction(pointer: Int)  {
+        skipInstructionPointerUpdate = true
+        instructionPointer = pointer
     }
 
     fun runProgram(): Array<Int> {
-        var n = 1000
         do {
-            println(memory.toIntArray().contentToString())
+//            println("$instructionPointer -> ${memory.toIntArray().contentToString()}")
             val codeString = getInstruction()
             val instructionCode =
                 if (codeString.length == 1) codeString.toInt() else codeString.substring(codeString.length - INSTRUCTION_CODE_LENGTH).toInt()
 
             instruction(instructionCode)
-            n--
-        } while (!done && instructionPointer <= memory.size && n > 0)
+        } while (!done && instructionPointer <= memory.size)
 
         return memory
     }
@@ -50,14 +55,14 @@ class Day5(var memory: Array<Int>, val inputCode: Int) {
 
     private fun instruction(code: Int) {
         when (code) {
-            1 ->  { debug("ADD"); opcode(THREE_PARAMS) { params -> memory[params[2]] = params[0] + params[1] }}
-            2 ->  { debug("MUL"); opcode(THREE_PARAMS) { params -> memory[params[2]] = params[0] * params[1] }}
+            1 ->  { debug("ADD"); opcode(THREE_PARAMS) { params -> memory[params[2]] = memory[params[0]] + memory[params[1]] }}
+            2 ->  { debug("MUL"); opcode(THREE_PARAMS) { params -> memory[params[2]] = memory[params[0]] * memory[params[1]] }}
             3 ->  { debug("INP"); opcode(ONE_PARAM) { params -> memory[params[0]] = inputCode }}
             4 ->  { debug("OUT"); opcode(ONE_PARAM) { params -> println(memory[params[0]]); lastOutput = memory[params[0]] }}
-            5 ->  { debug("JIT"); opcode(TWO_PARAM, false) { params -> print(params[0]); if (params[0] != 0) instructionPointer = params[1] }}
-            6 ->  { debug("JIF"); opcode(TWO_PARAM, false) { params -> print(params[0]); if (params[0] == 0) instructionPointer = params[1] }}
-            7 ->  { debug("LT");  opcode(THREE_PARAMS) { params -> memory[params[2]] = if (params[0] < params[1]) 1 else 0 }}
-            8 ->  { debug("EQU"); opcode(THREE_PARAMS) { params -> memory[params[2]] = if (params[0] == params[1]) 1 else 0 }}
+            5 ->  { debug("JIT"); opcode(TWO_PARAM) { params -> debug("cond ${params[0]}"); if (memory[params[0]] != 0) setInstruction(memory[params[1]]) }}
+            6 ->  { debug("JIF"); opcode(TWO_PARAM) { params -> debug("cond ${params[0]}"); if (memory[params[0]] == 0) setInstruction(memory[params[1]]) }}
+            7 ->  { debug("LT");  opcode(THREE_PARAMS) { params -> debug("${params[0]} < ${params[1]}");  memory[params[2]] = if (memory[params[0]] < memory[params[1]]) 1 else 0 }}
+            8 ->  { debug("EQU"); opcode(THREE_PARAMS) { params -> debug("${params[0]} == ${params[1]}"); memory[params[2]] = if (memory[params[0]] == memory[params[1]]) 1 else 0 }}
             99 -> { debug("END"); opcode(ZERO_PARAMS) { println("HALT"); done = true }}
         }
         println()
@@ -72,22 +77,21 @@ class Day5(var memory: Array<Int>, val inputCode: Int) {
             return IntArray(0)
         }
         val result = IntArray(num)
-        val codeString = getInstruction().padStart(INSTRUCTION_CODE_LENGTH + num, '0')
-        println("code $codeString")
+        val codeString = getInstruction()
+                .padStart(INSTRUCTION_CODE_LENGTH + num, '0')
+                .substring(0, num)
+                .reversed()
+//        print("code $codeString ")
 
-        for (i in 0 until num - 1) {
-            val mode = if (codeString.elementAt(num - i - 1) == '0') PositionMode else ImmediateMode
-            println ("mode: $i - $mode")
+        for (i in 0 until num) {
+            val mode = if (codeString.elementAt(i) == '0') PositionMode else ImmediateMode
             val paramPos = instructionPointer + 1 + i
 
-            result[i] = if (mode == PositionMode) {
-                memory[memory[paramPos]]
-            } else {
-                memory[paramPos]
-            }
+            result[i] = if (mode == PositionMode) memory[paramPos] else paramPos
+//            println ("mode: $i ($paramPos) - $mode = ${memory[result[i]]}")
         }
-        result[num - 1] = memory[instructionPointer + num]
 
+//        print("cont ${result.contentToString()}")
         return result
     }
 
