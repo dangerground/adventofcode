@@ -48,17 +48,14 @@ class Intcode {
     }
 
     fun runProgram(): Array<Int> {
-        var n = 100
         do {
             waitForInput = false
-//            println("$instructionPointer -> ${memory.toIntArray().contentToString()}")
             val codeString = getInstruction()
             val instructionCode =
                 if (codeString.length == 1) codeString.toInt() else codeString.substring(codeString.length - INSTRUCTION_CODE_LENGTH).toInt()
 
             instruction(instructionCode)
-            n--
-        } while (!waitForInput && !done && instructionPointer <= memory.size && n > 0)
+        } while (!(waitForInput || done))
 
         return memory
     }
@@ -80,7 +77,7 @@ class Intcode {
             8 ->  { debug("EQU"); opcode(THREE_PARAMS) { params -> debug("${params[0]} == ${params[1]}"); memory[params[2]] = if (memory[params[0]] == memory[params[1]]) 1 else 0 }}
             99 -> { debug("END"); opcode(ZERO_PARAMS) { debug("HALT"); done = true }}
         }
-        println()
+//        println()
     }
 
     private fun opcode3() {
@@ -92,7 +89,7 @@ class Intcode {
     }
 
     private fun debug(s: Any) {
-        print("$s ")
+//        print("$s ")
     }
 
     private fun getParams(num: Int): IntArray {
@@ -104,17 +101,14 @@ class Intcode {
                 .padStart(INSTRUCTION_CODE_LENGTH + num, '0')
                 .substring(0, num)
                 .reversed()
-//        print("code $codeString ")
 
         for (i in 0 until num) {
             val mode = if (codeString.elementAt(i) == '0') PositionMode else ImmediateMode
             val paramPos = instructionPointer + 1 + i
 
             result[i] = if (mode == PositionMode) memory[paramPos] else paramPos
-//            println ("mode: $i ($paramPos) - $mode = ${memory[result[i]]}")
         }
 
-//        print("cont ${result.contentToString()}")
         return result
     }
 

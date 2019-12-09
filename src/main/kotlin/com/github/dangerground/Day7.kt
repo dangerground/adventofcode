@@ -7,11 +7,11 @@ class Day7(val program: Array<Int>, configRange: Array<Int>) {
     var bestConfig = arrayOf(-1, -1, -1, -1, -1)
 
     val phaseConfigs = HashSet<Array<Int>>()
-    val amplifiers: ArrayList<Intcode>
+    private var amplifiers = ArrayList<Intcode>()
 
     init {
         generatePermutations(configRange.size, configRange)
-        amplifiers = initializeAmplifiers()
+        initializeAmplifiers()
     }
 
     fun runAmplifiers(phase: Array<Int>): Int {
@@ -25,28 +25,31 @@ class Day7(val program: Array<Int>, configRange: Array<Int>) {
         var halted = false
         do {
             for (i in 0..4) {
+//                println("-------------- Amplifier ${'A' + i} start")
                 val computer = amplifiers[i]
                 computer.inputCode = arrayOf(lastOutput)
                 computer.runProgram()
                 lastOutput = computer.lastOutput
                 halted = computer.isHalted()
+//                println("-------------- Amplifier ${'A' + i} end")
             }
         } while (!halted)
+//        println("-------------- Amplifiers done")
 
         return lastOutput
     }
 
-    private fun initializeAmplifiers(): ArrayList<Intcode> {
-        val amplifiers = ArrayList<Intcode>(5)
+    private fun initializeAmplifiers() {
+        amplifiers = ArrayList<Intcode>(5)
         for (i in 0..4) {
             amplifiers.add(Intcode(program.copyOf()))
         }
-        return amplifiers
     }
 
     fun findMaxAmplitude(): Int {
         var maxOutput = 0
         for (config in phaseConfigs) {
+            initializeAmplifiers()
             val output = runAmplifiers(config)
 
             if (output > maxOutput) {
