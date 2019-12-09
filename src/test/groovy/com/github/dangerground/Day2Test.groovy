@@ -4,7 +4,7 @@ package com.github.dangerground
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static de.rewe.digal.util.HelperUtil.convert
+import static com.github.dangerground.util.HelperUtil.convert
 
 class Day2Test extends Specification {
 

@@ -1,9 +1,19 @@
-package com.github.dangerground
+package com.github.dangerground.util
 
 import com.github.dangerground.Day5.ParameterMode.ImmediateMode
 import com.github.dangerground.Day5.ParameterMode.PositionMode
 
-class Day5(var memory: Array<Int>, val inputCode: Int) {
+class Intcode {
+
+    private var waitForInput = false
+    private var memory: Array<Int>
+    var inputCode: Array<Int> set(value) {field = value; inputIndex = 0}
+
+    constructor(memory: Array<Int>, inputCode: Array<Int> = arrayOf()) {
+        this.memory = memory
+        this.inputCode = inputCode
+        this.lastOutput = -1
+    }
 
     companion object {
         const val INSTRUCTION_CODE_LENGTH = 2
@@ -13,10 +23,13 @@ class Day5(var memory: Array<Int>, val inputCode: Int) {
         const val ZERO_PARAMS = 0
     }
 
-    var lastOutput: Int = -1
+    var inputIndex = 0
+    var lastOutput: Int
     private var instructionPointer = 0
     private var done = false
     private var skipInstructionPointerUpdate = false
+
+
 
     private fun opcode(paramCount: Int, command: (IntArray) -> Unit) {
         val params = getParams(paramCount)
@@ -35,40 +48,50 @@ class Day5(var memory: Array<Int>, val inputCode: Int) {
     }
 
     fun runProgram(): Array<Int> {
+        var n = 100
         do {
+            waitForInput = false
 //            println("$instructionPointer -> ${memory.toIntArray().contentToString()}")
             val codeString = getInstruction()
             val instructionCode =
                 if (codeString.length == 1) codeString.toInt() else codeString.substring(codeString.length - INSTRUCTION_CODE_LENGTH).toInt()
 
             instruction(instructionCode)
-        } while (!done && instructionPointer <= memory.size)
+            n--
+        } while (!waitForInput && !done && instructionPointer <= memory.size && n > 0)
 
         return memory
     }
 
     private fun getInstruction(): String {
         val code = memory[instructionPointer]
-        val codeString = code.toString()
-        return codeString
+        return code.toString()
     }
 
     private fun instruction(code: Int) {
         when (code) {
-            1 ->  { debug("ADD"); opcode(THREE_PARAMS) { params -> memory[params[2]] = memory[params[0]] + memory[params[1]] }}
-            2 ->  { debug("MUL"); opcode(THREE_PARAMS) { params -> memory[params[2]] = memory[params[0]] * memory[params[1]] }}
-            3 ->  { debug("INP"); opcode(ONE_PARAM) { params -> memory[params[0]] = inputCode }}
-            4 ->  { debug("OUT"); opcode(ONE_PARAM) { params -> println(memory[params[0]]); lastOutput = memory[params[0]] }}
+            1 ->  { debug("ADD"); opcode(THREE_PARAMS) { params -> debug("${memory[params[0]]} + ${memory[params[1]]}"); memory[params[2]] = memory[params[0]] + memory[params[1]] }}
+            2 ->  { debug("MUL"); opcode(THREE_PARAMS) { params -> debug("${memory[params[0]]} * ${memory[params[1]]}"); memory[params[2]] = memory[params[0]] * memory[params[1]] }}
+            3 ->  { debug("INP"); opcode3() }
+            4 ->  { debug("OUT"); opcode(ONE_PARAM) { params -> debug(memory[params[0]]); lastOutput = memory[params[0]] }}
             5 ->  { debug("JIT"); opcode(TWO_PARAM) { params -> debug("cond ${params[0]}"); if (memory[params[0]] != 0) setInstruction(memory[params[1]]) }}
             6 ->  { debug("JIF"); opcode(TWO_PARAM) { params -> debug("cond ${params[0]}"); if (memory[params[0]] == 0) setInstruction(memory[params[1]]) }}
             7 ->  { debug("LT");  opcode(THREE_PARAMS) { params -> debug("${params[0]} < ${params[1]}");  memory[params[2]] = if (memory[params[0]] < memory[params[1]]) 1 else 0 }}
             8 ->  { debug("EQU"); opcode(THREE_PARAMS) { params -> debug("${params[0]} == ${params[1]}"); memory[params[2]] = if (memory[params[0]] == memory[params[1]]) 1 else 0 }}
-            99 -> { debug("END"); opcode(ZERO_PARAMS) { println("HALT"); done = true }}
+            99 -> { debug("END"); opcode(ZERO_PARAMS) { debug("HALT"); done = true }}
         }
         println()
     }
 
-    private fun debug(s: String) {
+    private fun opcode3() {
+        if (inputCode.size <= inputIndex) {
+            waitForInput = true
+            return
+        }
+        opcode(ONE_PARAM) { params -> memory[params[0]] = inputCode[inputIndex++] }
+    }
+
+    private fun debug(s: Any) {
         print("$s ")
     }
 
@@ -94,6 +117,8 @@ class Day5(var memory: Array<Int>, val inputCode: Int) {
 //        print("cont ${result.contentToString()}")
         return result
     }
+
+    fun isHalted(): Boolean = done
 
     enum class ParameterMode {
         PositionMode, // 0
