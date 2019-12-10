@@ -10,4 +10,10 @@ class HelperUtil {
                 .mapToInt({ s -> Integer.parseInt(s) })
                 .toArray()
     }
+    static Long[] convertL(String input) {
+
+        return Stream.of(input.split(","))
+                .mapToLong({ s -> Long.parseLong(s) })
+                .toArray()
+    }
 }
