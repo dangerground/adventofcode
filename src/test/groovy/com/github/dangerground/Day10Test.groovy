@@ -69,32 +69,19 @@ class Day10Test extends Specification {
 ###.##.####.##.#..##"""
 
 
+    public static final String MAP6 = """.#....#####...#..
+##...##.#####..##
+##...#...#.#####.
+..#.....X...###..
+..#.#.....#....##"""
+
 
     @Unroll
     def "find best asteroid on map #distance"(String input, int distance) {
-        given:
-        def day10 = new Day10()
-
         when:
-        day10.readMap(input)
+        def day10 = new Day10(input)
 
         then:
-        for (def y in 0..4) {
-            for (def x in 0..4) {
-                def p = false
-                for (asteroid in day10.asteroidList) {
-                    if (asteroid.x == x && asteroid.y == y) {
-                        print asteroid.seeableAsteroids
-                        p = true
-                        break
-                    }
-                }
-                if (!p) {
-                    print "."
-                }
-            }
-            println()
-        }
         day10.findBestAsteroid() == distance
 
         where:
@@ -110,16 +97,41 @@ class Day10Test extends Specification {
 
     def "find best distance"() {
         given:
-        def day10 = new Day10()
         def input = new File(getClass().getResource("/day10input.txt").file).text
 
         when:
-        day10.readMap(input)
+        def day10 = new Day10(input)
 
         then:
         def result = day10.findBestAsteroid()
 
         then:
         println "distance: $result"
+    }
+
+    @Unroll
+    def "find best asteroid on map #startX, #startY"(String input, int startX, startY) {
+        when:
+        def day10 = new Day10(input)
+
+        then:
+        day10.destroyAllAsteroids(startX, startY)
+
+        where:
+        input | startX | startY
+//        MAP0  | 2      | 0
+        MAP5  | 11      | 13
+//        MAP6  | 8      | 3
+    }
+
+    def "find 200th destroyed asteroid"() {
+        given:
+        def input = new File(getClass().getResource("/day10input.txt").file).text
+
+        when:
+        def day10 = new Day10(input)
+
+        then:
+        day10.destroyAllAsteroids(11, 11)
     }
 }

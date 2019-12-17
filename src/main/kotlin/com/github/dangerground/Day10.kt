@@ -1,18 +1,22 @@
 package com.github.dangerground
 
-import kotlin.math.sqrt
-
+import com.github.dangerground.util.Vector2D
 
 typealias Coord = Int
 typealias Count = Int
 
 
-class Day10 {
+class Day10(map: String) {
     private val asteroidList = ArrayList<Asteroid>()
 
+    private var fieldWidth = 0.0
+    private var fieldHeight = 0.0
 
-    fun readMap(map: String) {
-        map.split("\n").forEachIndexed { y, line ->
+    init {
+        val lines = map.split("\n")
+        fieldHeight = lines.size.toDouble()
+        fieldWidth = lines[0].length.toDouble()
+        lines.forEachIndexed { y, line ->
             line.toCharArray().forEachIndexed { x, point ->
                 if (point == '#') {
                     asteroidList.add(Asteroid(x, y))
@@ -30,6 +34,10 @@ class Day10 {
                 for (blocker in asteroidList) {
                     if (!(source == dest || source == blocker || dest == blocker)) {
                         if (isBlocking(source, dest, blocker)) {
+                            if (source.blockers.containsKey(dest)) {
+                                source.blockers[dest] = ArrayList()
+                            }
+                            source.blockers[dest]?.add(blocker)
                             seeableAsteroids--
                             break
                         }
@@ -46,6 +54,7 @@ class Day10 {
         asteroidList.forEach {
             if (it.seeableAsteroids > bestFit) {
                 bestFit = it.seeableAsteroids
+                println(it)
             }
         }
 
@@ -53,32 +62,73 @@ class Day10 {
     }
 
     private fun isBlocking(source: Asteroid, dest: Asteroid, blocker: Asteroid): Boolean {
-        val crossproduct = (blocker.y - source.y) * (dest.x - source.x) - (blocker.x - source.x) * (dest.y - source.y)
-        if (crossproduct != 0) {
+        if (crossproduct(blocker, source, dest) != 0) {
             return false
         }
 
-        val dotproduct = (blocker.x - source.x) * (dest.x - source.x) + (blocker.y - source.y) * (dest.y - source.y)
+        val dotproduct = dotproduct(blocker, source, dest)
         if (dotproduct < 0) {
             return false
         }
 
-        val squaredlength = (dest.x - source.x) * (dest.x - source.x) + (dest.y - source.y) * (dest.y - source.y)
+        val squaredlength = dotproduct(dest, source, dest)
         return dotproduct <= squaredlength
+    }
+
+    private fun crossproduct(blocker: Asteroid, source: Asteroid, dest: Asteroid) =
+            (blocker.y - source.y) * (dest.x - source.x) - (blocker.x - source.x) * (dest.y - source.y)
+
+    private fun dotproduct(blocker: Asteroid, source: Asteroid, dest: Asteroid) =
+            (blocker.x - source.x) * (dest.x - source.x) + (blocker.y - source.y) * (dest.y - source.y)
+
+    fun destroyAllAsteroids(x: Coord, y: Coord) {
+        val start = Asteroid(x, y)
+        asteroidList.remove(start)
+        val circleList = buildDegreeMap(start)
+
+        var n = 0
+        while (asteroidList.isNotEmpty()) {
+            circleList.toSortedMap().forEach { (degree, asteroids) ->
+                if (!asteroids.isEmpty()) {
+                    val toBeDestroyed = asteroids.minBy { it.distanceTo(start) }!!
+                    asteroidList.remove(toBeDestroyed)
+                    asteroids.remove(toBeDestroyed)
+                    n++
+                    println("remove $n - $degree - $toBeDestroyed) [${asteroids}]")
+                }
+            }
+        }
+    }
+
+    private fun buildDegreeMap(start: Asteroid): HashMap<Float, ArrayList<Asteroid>> {
+        val circleList = HashMap<Float, ArrayList<Asteroid>>()
+        val startVector = Vector2D(0, 0 - fieldHeight.toInt())
+        asteroidList.forEach {
+            val tempVector = Vector2D(it.x - start.x, it.y - start.y)
+
+            println("original $it -> $tempVector")
+            val degree = Math.toDegrees(startVector.degreeTo(tempVector)).toFloat()
+            val realDegree = if (tempVector.x < 0) 360 - degree else degree
+            if (!circleList.containsKey(realDegree)) {
+                circleList[realDegree] = ArrayList()
+            }
+            circleList[realDegree]?.add(it)
+        }
+        return circleList
     }
 }
 
-class Asteroid(val x: Coord, val y: Coord) {
+class Asteroid(x: Coord, y: Coord) : Vector2D(x, y) {
     var seeableAsteroids: Count = 0
+    val blockers = HashMap<Asteroid, ArrayList<Asteroid>>()
 
-    // return the Euclidean distance between the two points
-    fun distanceTo(other: Asteroid): Double {
-        val dx: Double = x.toDouble() - other.x
-        val dy: Double = y.toDouble() - other.y
-        return sqrt(dx * dx + dy * dy)
+    override fun equals(other: Any?): Boolean {
+        return other is Asteroid && x == other.x && y == other.y
     }
 
-    override fun toString(): String {
-        return "($y,$x;$seeableAsteroids)"
+    override fun hashCode(): Int {
+        var result = seeableAsteroids
+        result = 31 * result + blockers.hashCode()
+        return result
     }
 }
