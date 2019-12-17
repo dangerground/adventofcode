@@ -2,11 +2,11 @@ package com.github.dangerground
 
 import com.github.dangerground.util.Intcode
 
-class Day7(val program: Array<Int>, configRange: Array<Int>) {
+class Day7(val program: Array<Long>, configRange: Array<Long>) {
 
-    var bestConfig = arrayOf(-1, -1, -1, -1, -1)
+    var bestConfig = arrayOf(-1L, -1L, -1L, -1L, -1L)
 
-    val phaseConfigs = HashSet<Array<Int>>()
+    val phaseConfigs = HashSet<Array<Long>>()
     private var amplifiers = ArrayList<Intcode>()
 
     init {
@@ -14,8 +14,8 @@ class Day7(val program: Array<Int>, configRange: Array<Int>) {
         initializeAmplifiers()
     }
 
-    fun runAmplifiers(phase: Array<Int>): Int {
-        var lastOutput = 0
+    fun runAmplifiers(phase: Array<Long>): Long {
+        var lastOutput = 0L
         for (i in 0..4) {
             val computer = amplifiers[i]
             computer.inputCode = arrayOf(phase[i], lastOutput)
@@ -46,8 +46,8 @@ class Day7(val program: Array<Int>, configRange: Array<Int>) {
         }
     }
 
-    fun findMaxAmplitude(): Int {
-        var maxOutput = 0
+    fun findMaxAmplitude(): Long {
+        var maxOutput = 0L
         for (config in phaseConfigs) {
             initializeAmplifiers()
             val output = runAmplifiers(config)
@@ -61,9 +61,9 @@ class Day7(val program: Array<Int>, configRange: Array<Int>) {
         return maxOutput
     }
 
-    fun generatePermutations(n: Int, elements: Array<Int>) {
+    fun generatePermutations(n: Int, elements: Array<Long>) {
         if (n == 1) {
-            phaseConfigs.add(elements.toIntArray().toTypedArray())
+            phaseConfigs.add(elements)
         } else {
             for (i in 0 until n) {
                 generatePermutations(n - 1, elements.copyOf())
@@ -72,7 +72,7 @@ class Day7(val program: Array<Int>, configRange: Array<Int>) {
         }
     }
 
-    fun swap(elements: Array<Int>, i: Int, j: Int) {
+    fun swap(elements: Array<Long>, i: Int, j: Int) {
         val x = elements[i]
         elements[i] = elements[j]
         elements[j] = x
