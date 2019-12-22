@@ -26,6 +26,14 @@ class Intcode {
         const val TWO_PARAM = 2
         const val ONE_PARAM = 1
         const val ZERO_PARAMS = 0
+
+        fun of(input: String) : Intcode {
+            return Intcode(HelperUtil.convertL(input))
+        }
+        fun ofFile(fileName: String) : Intcode {
+            val input  =Intcode::class.java.getResource(fileName).readText()
+            return Intcode(HelperUtil.convertL(input))
+        }
     }
 
     var inputIndex = 0
@@ -184,6 +192,10 @@ class Intcode {
         }
 
         return 0
+    }
+
+    fun setMem(position: Long, value: Long) {
+        memory[position] = value
     }
 
     fun isHalted(): Boolean = done
