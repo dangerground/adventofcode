@@ -1,8 +1,8 @@
 package com.github.dangerground
 
+import com.github.dangerground.util.Direction
 import com.github.dangerground.util.HelperUtil
 import com.github.dangerground.util.Intcode
-import java.lang.RuntimeException
 
 class Day11 {
 
@@ -97,13 +97,6 @@ class Panel(val x: Int, val y: Int) {
 enum class Color {
     White,
     Black
-}
-
-enum class Direction {
-    North,
-    East,
-    South,
-    West
 }
 
 
