@@ -70,7 +70,7 @@ class Arcade {
 
 }
 
-class Coord2D(val x: Long, val y: Long) {
+class Coord2D(val x: Long, val y: Long) : Comparable<Coord2D> {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -91,6 +91,12 @@ class Coord2D(val x: Long, val y: Long) {
 
     override fun toString(): String {
         return "Coord2D(x=$x, y=$y)"
+    }
+
+    override fun compareTo(other: Coord2D): Int {
+        val o1 = y.compareTo(other.y)
+        if (o1 != 0) return o1
+        return x.compareTo(other.x)
     }
 
 
